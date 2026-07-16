@@ -1,7 +1,7 @@
 import subprocess
 from datetime import datetime, timedelta
-from shared_models import FileAnalysis, FileContext
-from config import (
+from shared.shared_models import FileAnalysis, FileContext
+from shared.config import (
     CHURN_LOOKBACK_MONTHS,
     HIGH_COMPLEXITY_THRESHOLD,
     HIGH_CHURN_THRESHOLD,
@@ -63,6 +63,7 @@ def compute_priority(analyzed_files: list[FileAnalysis], repo_path: str) -> list
     for file_analysis in analyzed_files:
         churn = get_churn_count(repo_path, file_analysis.file_path)
         last_touched = get_last_touched_days(repo_path, file_analysis.file_path)
+        print(f"DEBUG: {file_analysis.file_path} | grade={file_analysis.complexity_grade} | churn={churn} | last_touched={last_touched}")
         flagged, priority_score = apply_priority_rule(file_analysis, churn, last_touched)
 
         contextualized.append(FileContext(
@@ -73,6 +74,7 @@ def compute_priority(analyzed_files: list[FileAnalysis], repo_path: str) -> list
             priority_score=priority_score
         ))
 
+        
     # Only return flagged files, sorted by priority, capped at TOP_N_FILES
     flagged_only = [f for f in contextualized if f.priority_flag]
     flagged_only.sort(key=lambda f: f.priority_score, reverse=True)

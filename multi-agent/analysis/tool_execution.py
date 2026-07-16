@@ -2,8 +2,8 @@ import subprocess
 import json
 import os
 import sys
-from shared_models import FileAnalysis
-from config import HIGH_COMPLEXITY_THRESHOLD
+from shared.shared_models import FileAnalysis
+from shared.config import HIGH_COMPLEXITY_THRESHOLD
 
 def run_radon_cc(file_paths: list[str]) -> dict:
     result = subprocess.run(

@@ -11,10 +11,10 @@ multi_agent_dir = os.path.join(current_dir, "..", "multi-agent")
 sys.path.append(multi_agent_dir)
 
 # Now we can import from multi-agent
-from orchestrator import run_pipeline
-from code_fixing_agent import fix_file
-from shared_models import FixRequest
-from config import TEMP_CLONE_DIR
+from analysis.agent_graph import run_agentic_pipeline
+from fixing.code_fixing_agent import fix_file
+from shared.shared_models import FixRequest, ReportOutput
+from shared.config import TEMP_CLONE_DIR
 
 # --- App Setup ---
 app = FastAPI(title="Code Debt Analyzer API")
@@ -37,30 +37,36 @@ class APIFixRequest(BaseModel):
     file_path: str
     issue_reason: str
 
+# --- Pydantic Model for API Response ---
+class AnalyzeResponse(BaseModel):
+    report: ReportOutput
+    trace: list[str]
+
 # --- Endpoints ---
 
-@app.post("/analyze")
+@app.post("/analyze", response_model=AnalyzeResponse)
 def analyze_repo(request: AnalyzeRequest):
     """
-    Analyzes a GitHub repository for technical debt and returns a prioritized report.
+    Analyzes a GitHub repository for technical debt using an agentic LangGraph
+    pipeline, and returns a prioritized report along with the agent's decision trace.
     """
     try:
-        # run_pipeline returns (ReportOutput, repo_path)
-        report, repo_path = run_pipeline(request.repo_url)
-        return report
+        report, repo_path, trace = run_agentic_pipeline(request.repo_url)
+        return AnalyzeResponse(report=report, trace=trace)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/fix")
 def fix_code_debt(request: APIFixRequest):
     """
-    Generates an LLM-suggested fix for a specific flagged file.
+    Generates an LLM-suggested fix for a specific flagged file, using a
+    generate -> validate -> retry agentic loop internally.
     """
     try:
         # Reconstruct the local repository path
         repo_name = request.repo_url.rstrip("/").split("/")[-1].replace(".git", "")
         repo_path = os.path.join(TEMP_CLONE_DIR, repo_name)
-        
+
         if not os.path.exists(repo_path):
             raise HTTPException(status_code=400, detail="Repository not found locally. Run /analyze first.")
 
@@ -69,7 +75,7 @@ def fix_code_debt(request: APIFixRequest):
             file_path=request.file_path,
             issue_reason=request.issue_reason
         )
-        
+
         # Call the Code Fixing Agent
         fix_response = fix_file(internal_request, repo_path)
         return fix_response

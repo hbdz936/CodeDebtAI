@@ -1,11 +1,11 @@
 import subprocess
 import os
 import shutil
-from config import TEMP_CLONE_DIR
-from tool_execution import run_static_analysis
-from context_agent import compute_priority
-from report_agent import build_report
-from shared_models import ReportOutput
+from shared.config import TEMP_CLONE_DIR
+from analysis.tool_execution import run_static_analysis
+from analysis.context_agent import compute_priority
+from analysis.report_agent import build_report
+from shared.shared_models import ReportOutput
 
 import stat
 

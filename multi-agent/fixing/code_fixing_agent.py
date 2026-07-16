@@ -1,8 +1,8 @@
 import os
 import difflib
 from groq import Groq
-from shared_models import FixRequest, FixResponse
-from config import LLM_MODEL
+from shared.shared_models import FixRequest, FixResponse
+from shared.config import LLM_MODEL
 
 client = Groq()  # reads GROQ_API_KEY from environment variable
 
@@ -58,17 +58,29 @@ def build_diff(original_code: str, suggested_code: str) -> list[dict]:
 
     return structured_diff
 
+from shared.shared_models import FixRequest, FixResponse
+
 def fix_file(request: FixRequest, repo_path: str) -> FixResponse:
     """Code Fixing Agent entry point - called by backend on dropdown selection."""
-    original_code = read_file_content(repo_path, request.file_path)
-    suggested_code = generate_fix(original_code, request.issue_reason)
-    diff = build_diff(original_code, suggested_code)
+    from fix_graph import fix_graph_app  # import here to avoid circular import
+
+    result = fix_graph_app.invoke({
+        "repo_path": repo_path,
+        "file_path": request.file_path,
+        "issue_reason": request.issue_reason,
+        "original_code": None,
+        "suggested_code": None,
+        "diff": None,
+        "fix_valid": None,
+        "retry_count": 0,
+        "trace": []
+    })
 
     return FixResponse(
         file_path=request.file_path,
-        original_code=original_code,
-        suggested_code=suggested_code,
-        diff=diff
+        original_code=result["original_code"],
+        suggested_code=result["suggested_code"],
+        diff=result["diff"]
     )
 
 def apply_fix(repo_path: str, relative_file_path: str, suggested_code: str) -> bool:

@@ -1,4 +1,4 @@
-from shared_models import FileContext, ReportItem, ReportOutput
+from shared.shared_models import FileContext, ReportItem, ReportOutput
 
 def _build_reason(file_ctx: FileContext) -> str:
     """Human-readable explanation for why this file was flagged."""

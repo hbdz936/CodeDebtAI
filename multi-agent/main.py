@@ -1,11 +1,15 @@
-from orchestrator import run_pipeline
-from code_fixing_agent import fix_file, apply_fix
-from shared_models import FixRequest
+from analysis.agent_graph import run_agentic_pipeline
+from fixing.code_fixing_agent import fix_file, apply_fix
+from shared.shared_models import FixRequest
 
 def test_full_pipeline(repo_url: str):
-    """Flow 1: automatic pipeline, runs once per repo submission."""
+    """Flow 1: automatic pipeline, runs once per repo submission (now agentic)."""
     print(f"Analyzing repo: {repo_url}")
-    report, repo_path = run_pipeline(repo_url)
+    report, repo_path, trace = run_agentic_pipeline(repo_url)
+
+    print("\n--- Agent Trace ---")
+    for step in trace:
+        print(f"  {step}")
 
     print("\n--- Report Summary ---")
     print(report.summary)
@@ -35,7 +39,7 @@ def test_code_fixing(repo_path: str, file_path: str, issue_reason: str):
     return fix_response
 
 if __name__ == "__main__":
-    test_repo_url = "https://github.com/hbdz936/fit-auditor.git"
+    test_repo_url = "https://github.com/cosmicvibecoder/testing-code-debt.git"
     report, repo_path = test_full_pipeline(test_repo_url)
 
     if report.files:
