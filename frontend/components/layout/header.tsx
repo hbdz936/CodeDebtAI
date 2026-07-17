@@ -37,7 +37,8 @@ export function Header() {
 
     try {
       // Fetch the binary file stream from your backend route
-      const response = await fetch("http://127.0.0.1:8000/export-pdf", {
+      const httpUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const response = await fetch(`${httpUrl}/export-pdf`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
