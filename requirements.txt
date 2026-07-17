@@ -8,3 +8,4 @@ uvicorn
 langgraph
 python-dotenv
 reportlab
+GitPython>=3.1.0
